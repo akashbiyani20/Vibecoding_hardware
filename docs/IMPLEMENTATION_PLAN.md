@@ -69,4 +69,6 @@ tb/integration/ multi-module testbenches (Stage B+)
 tb/system/      full-SoC program tests (Stage D)
 sim/modelsim/   .do run scripts
 sim/icarus/     shell run scripts
-docs/modules
+docs/modules/   per-module documentation
+sw/             test programs / firmware (Stage B+)
+```

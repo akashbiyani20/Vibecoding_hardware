@@ -1,0 +1,96 @@
+D:/RPTU/Vibecoding_hardware/tb/unit/tb_pc.sv {0 {vlog -work work -sv -stats=none D:/RPTU/Vibecoding_hardware/tb/unit/tb_pc.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_pc.sv(14): Cannot open `include file "riscv_defines.svh".
+-- Compiling module tb_pc
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_pc.sv(59): (vlog-2163) Macro `RESET_PC is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_pc.sv(84): (vlog-2163) Macro `RESET_PC is undefined.
+
+} {3.0 4.0 5.0 7.0} {}} D:/RPTU/Vibecoding_hardware/rtl/core/pc.sv {1 {vlog -work work -sv -stats=none D:/RPTU/Vibecoding_hardware/rtl/core/pc.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module pc
+
+Top level modules:
+	pc
+
+} {} {}} D:/RPTU/Vibecoding_hardware/rtl/core/riscv_defines.svh {1 {vlog -work work -sv -stats=none D:/RPTU/Vibecoding_hardware/rtl/core/riscv_defines.svh
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+
+} {} {}} D:/RPTU/Vibecoding_hardware/tb/unit/tb_regfile.sv {1 {vlog -work work -sv -stats=none D:/RPTU/Vibecoding_hardware/tb/unit/tb_regfile.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module tb_regfile
+
+Top level modules:
+	tb_regfile
+
+} {} {}} D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv {0 {vlog -work work -sv -stats=none D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(12): Cannot open `include file "riscv_defines.svh".
+-- Compiling module tb_alu
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(35): (vlog-2163) Macro `ALU_ADD is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(35): near ":": syntax error, unexpected ':'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(36): (vlog-2163) Macro `ALU_SUB is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(37): (vlog-2163) Macro `ALU_AND is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(38): (vlog-2163) Macro `ALU_OR is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(39): (vlog-2163) Macro `ALU_XOR is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(40): (vlog-2163) Macro `ALU_SLL is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(41): (vlog-2163) Macro `ALU_SRL is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(42): (vlog-2163) Macro `ALU_SRA is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(43): (vlog-2163) Macro `ALU_SLT is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(44): (vlog-2163) Macro `ALU_SLTU is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(75): (vlog-2163) Macro `ALU_ADD is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(75): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(75): (vlog-2163) Macro `ALU_SUB is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(75): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(75): (vlog-2163) Macro `ALU_AND is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(75): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(76): (vlog-2163) Macro `ALU_OR is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(76): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(76): (vlog-2163) Macro `ALU_XOR is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(76): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(76): (vlog-2163) Macro `ALU_SLL is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(76): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(77): (vlog-2163) Macro `ALU_SRL is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(77): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(77): (vlog-2163) Macro `ALU_SRA is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(77): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(77): (vlog-2163) Macro `ALU_SLT is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(77): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(78): (vlog-2163) Macro `ALU_SLTU is undefined.
+** Error: (vlog-13069) D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(78): near ";": syntax error, unexpected ';'.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(81): (vlog-2163) Macro `ALU_ADD is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(82): (vlog-2163) Macro `ALU_ADD is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(83): (vlog-2163) Macro `ALU_ADD is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(86): (vlog-2163) Macro `ALU_SUB is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(87): (vlog-2163) Macro `ALU_SUB is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(88): (vlog-2163) Macro `ALU_SUB is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(91): (vlog-2163) Macro `ALU_AND is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(92): (vlog-2163) Macro `ALU_OR is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(93): (vlog-2163) Macro `ALU_XOR is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(94): (vlog-2163) Macro `ALU_XOR is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(97): (vlog-2163) Macro `ALU_SLL is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(98): (vlog-2163) Macro `ALU_SLL is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(99): (vlog-2163) Macro `ALU_SLL is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(101): (vlog-2163) Macro `ALU_SRL is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(102): (vlog-2163) Macro `ALU_SRA is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(103): (vlog-2163) Macro `ALU_SRA is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(106): (vlog-2163) Macro `ALU_SLT is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(107): (vlog-2163) Macro `ALU_SLTU is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(108): (vlog-2163) Macro `ALU_SLT is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(109): (vlog-2163) Macro `ALU_SLT is undefined.
+** Error: D:/RPTU/Vibecoding_hardware/tb/unit/tb_alu.sv(110): (vlog-2163) Macro `ALU_SLT is undefined.
+
+} {3.0 4.0 5.0 57.0} {}} D:/RPTU/Vibecoding_hardware/rtl/core/regfile.sv {1 {vlog -work work -sv -stats=none D:/RPTU/Vibecoding_hardware/rtl/core/regfile.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module regfile
+
+Top level modules:
+	regfile
+
+} {} {}} D:/RPTU/Vibecoding_hardware/rtl/core/alu.sv {1 {vlog -work work -sv -stats=none D:/RPTU/Vibecoding_hardware/rtl/core/alu.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module alu
+
+Top level modules:
+	alu
+
+} {} {}}

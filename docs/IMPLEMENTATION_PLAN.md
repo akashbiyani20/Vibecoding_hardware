@@ -10,9 +10,9 @@ integration. Nothing is integrated before its unit tests pass.
 | 1 | Program Counter | `rtl/core/pc.sv` | done, verified |
 | 2 | Register File | `rtl/core/regfile.sv` | done, verified |
 | 3 | ALU | `rtl/core/alu.sv` | done, verified |
-| 4 | Immediate Generator | `rtl/core/imm_gen.sv` | next |
-| 5 | Control Unit / Decoder | `rtl/core/control.sv` | pending |
-| 6 | Branch Comparator | (folded into ALU/control decision — decide at step 5) | pending |
+| 4 | Immediate Generator | `rtl/core/imm_gen.sv` | done, verified |
+| 5 | Control Unit / Decoder | `rtl/core/control.sv` | done, verified |
+| 6 | Branch Comparator | folded into ALU zero flag + control (`taken = branch & (zero ^ funct3[0])`) | resolved |
 
 ## Stage B — Single-cycle core integration
 
@@ -69,5 +69,4 @@ tb/system/      full-SoC program tests (Stage D)
 sim/modelsim/   .do run scripts
 sim/icarus/     shell run scripts
 docs/modules/   per-module documentation
-sw/             test programs / firmware (Stage B+)
-```
+sw/             te

@@ -1,0 +1,9 @@
+sim/icarus/build/
+sim/modelsim/work/
+*.vcd
+*.wlf
+transcript
+work/
+*.mti
+transcript
+vsim.wlf

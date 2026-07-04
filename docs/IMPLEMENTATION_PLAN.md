@@ -14,13 +14,14 @@ integration. Nothing is integrated before its unit tests pass.
 | 5 | Control Unit / Decoder | `rtl/core/control.sv` | done, verified |
 | 6 | Branch Comparator | folded into ALU zero flag + control (`taken = branch & (zero ^ funct3[0])`) | resolved |
 
-## Stage B — Single-cycle core integration
+## Stage B — Single-cycle core integration (COMPLETE)
 
-7. Instruction memory (behavioral, `$readmemh` init)
-8. Core top (`rtl/core/core_top.sv`): wire PC → IMEM → decode → regfile/ALU → writeback
-9. Core-level testbench executing real RV32I programs (assembled hex files)
-10. Data memory access (LW/SW) via a simple memory interface — this interface
-    later becomes the AXI4-Lite master
+7. Instruction memory (`rtl/core/imem.sv`) — done
+8. Core top (`rtl/core/core_top.sv`) — done, all leaf modules wired
+9. Core-level testbench (`tb/integration/tb_core.sv`) running 5 real RV32I
+   programs assembled with `sw/asm.py` — done, 19/19 checks pass
+10. Data memory interface (LW/SW) — done as a simple read/write port;
+    becomes the AXI4-Lite master in Stage C
 
 ## Stage C — Bus and peripherals
 
@@ -68,5 +69,4 @@ tb/integration/ multi-module testbenches (Stage B+)
 tb/system/      full-SoC program tests (Stage D)
 sim/modelsim/   .do run scripts
 sim/icarus/     shell run scripts
-docs/modules/   per-module documentation
-sw/             te
+docs/modules

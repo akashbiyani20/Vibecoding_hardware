@@ -49,6 +49,12 @@ module core_top (
     input  logic        clk_i,
     input  logic        rst_ni,
 
+    // Stall: freezes the whole core mid-instruction. Asserted by the bus
+    // bridge while an AXI data transaction is in flight (memory answers
+    // take multiple cycles on a real bus). While stalled, the PC holds and
+    // no register is written, so the instruction simply stretches in time.
+    input  logic        stall_i,
+
     // instruction fetch interface
     output logic [31:0] imem_addr_o,
     input  logic [31:0] imem_rdata_i,
@@ -87,7 +93,7 @@ module core_top (
   pc u_pc (
       .clk_i    (clk_i),
       .rst_ni   (rst_ni),
-      .en_i     (1'b1),        // no stalls in a single-cycle core
+      .en_i     (~stall_i),    // hold the PC while the bus is busy
       .pc_next_i(pc_next),
       .pc_o     (pc_q)
   );
@@ -117,7 +123,7 @@ module core_top (
 
   regfile u_regfile (
       .clk_i    (clk_i),
-      .we_i     (reg_write),
+      .we_i     (reg_write & ~stall_i),  // don't write rd until the bus answers
       .waddr_i  (instr[11:7]),    // rd
       .wdata_i  (wb_data),
       .raddr_a_i(instr[19:15]),   // rs1

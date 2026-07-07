@@ -11,7 +11,7 @@ cModel Technology
 dD:/RPTU/Practice SV/SPI
 valu
 Z0 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-Z1 !s110 1783203370
+Z1 !s110 1783457214
 !i10b 1
 !s100 3PW?Z0L]5<c;MbGZQKMK^1
 Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
@@ -22,13 +22,13 @@ Z4 dD:/RPTU/Vibecoding_hardware
 w1783202770
 8D:/RPTU/Vibecoding_hardware/rtl/core/alu.sv
 FD:/RPTU/Vibecoding_hardware/rtl/core/alu.sv
-!i122 0
+!i122 4
 L0 30 27
 Z5 OV;L;2020.1;71
 r1
 !s85 0
 31
-Z6 !s108 1783203370.000000
+Z6 !s108 1783457214.000000
 !s107 D:\RPTU\Vibecoding_hardware\rtl\core\riscv_defines.svh|D:/RPTU/Vibecoding_hardware/rtl/core/alu.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|D:/RPTU/Vibecoding_hardware/rtl/core/alu.sv|
 !i113 1
@@ -47,7 +47,7 @@ R4
 w1783202646
 8D:/RPTU/Vibecoding_hardware/rtl/core/pc.sv
 FD:/RPTU/Vibecoding_hardware/rtl/core/pc.sv
-!i122 1
+!i122 5
 L0 27 17
 R5
 r1
@@ -61,7 +61,7 @@ R7
 R8
 vregfile
 R0
-Z9 !s110 1783203371
+Z9 !s110 1783457215
 !i10b 1
 !s100 azU5QKCLC0;^9_h<QC@3;0
 R2
@@ -72,13 +72,13 @@ R4
 w1783202709
 8D:/RPTU/Vibecoding_hardware/rtl/core/regfile.sv
 FD:/RPTU/Vibecoding_hardware/rtl/core/regfile.sv
-!i122 2
+!i122 6
 L0 37 29
 R5
 r1
 !s85 0
 31
-Z10 !s108 1783203371.000000
+R6
 !s107 D:/RPTU/Vibecoding_hardware/rtl/core/regfile.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|D:/RPTU/Vibecoding_hardware/rtl/core/regfile.sv|
 !i113 1
@@ -97,13 +97,13 @@ R4
 w1783202731
 8D:/RPTU/Vibecoding_hardware/tb/unit/tb_regfile.sv
 FD:/RPTU/Vibecoding_hardware/tb/unit/tb_regfile.sv
-!i122 3
+!i122 7
 L0 15 106
 R5
 r1
 !s85 0
 31
-R10
+!s108 1783457215.000000
 !s107 D:/RPTU/Vibecoding_hardware/tb/unit/tb_regfile.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|D:/RPTU/Vibecoding_hardware/tb/unit/tb_regfile.sv|
 !i113 1

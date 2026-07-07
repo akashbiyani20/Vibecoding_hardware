@@ -23,18 +23,23 @@ integration. Nothing is integrated before its unit tests pass.
 10. Data memory interface (LW/SW) — done as a simple read/write port;
     becomes the AXI4-Lite master in Stage C
 
-## Stage C — Bus and peripherals
+## Stage C — Bus and peripherals (COMPLETE)
 
-11. AXI4-Lite master port on the core (data side)
-12. AXI4-Lite interconnect (1 master, N slaves, address-decoded)
-13. GPIO peripheral (AXI4-Lite slave)
-14. UART TX peripheral (AXI4-Lite slave)
+11. AXI4-Lite master bridge (`rtl/bus/axi_lite_master.sv`) — done; core
+    gained a `stall_i` input so bus transactions can take multiple cycles
+12. AXI4-Lite interconnect (`rtl/bus/axi_lite_xbar.sv`, 1 master, 3 slaves,
+    DECERR default responder) — done
+13. Data RAM slave (`rtl/periph/axi_lite_ram.sv`) — done
+14. GPIO slave (`rtl/periph/axi_lite_gpio.sv`) — done
+15. UART TX slave (`rtl/periph/axi_lite_uart.sv`) — done
 
-## Stage D — SoC top and system tests
+## Stage D — SoC top and system tests (SoC COMPLETE, FPGA pending)
 
-15. `rtl/soc_top.sv`
-16. System testbenches: LED blink program, UART "Hello World"
-17. FPGA port
+16. `rtl/soc/soc_top.sv` — done
+17. System testbench `tb/system/tb_soc.sv` — done: firmware blinks the LED
+    (steady period verified) and prints "Hi!\n" over UART (decoded off the
+    pin by an independent serial receiver). Black-box, pins only.
+18. FPGA port — pending (requires an FPGA board; RTL is vendor-neutral)
 
 ## Key decisions made so far
 

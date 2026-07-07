@@ -38,6 +38,8 @@ module tb_core;
   core_top dut (
       .clk_i       (clk),
       .rst_ni      (rst_n),
+      .stall_i     (1'b0),        // TB memories answer in the same cycle
+
       .imem_addr_o (imem_addr),
       .imem_rdata_i(imem_rdata),
       .dmem_addr_o (dmem_addr),
@@ -156,6 +158,11 @@ module tb_core;
     check_reg(5, 1, "prog5: slt signed");
     check_reg(6, 0, "prog5: sltu unsigned");
     check_reg(7, 32'hFFF0_0000, "prog5: xor");
+
+	// ---Prog 6 Mul 10*7 test
+	run_prog("prog6_mul", 60);
+	check_reg(3, 70, "prog6: 10*7");
+	//check_reg(3, 71, ...)
 
     // ---- summary --------------------------------------------------------------------------------
     if (errors == 0) $display("RESULT: PASS (%0d checks)", checks);

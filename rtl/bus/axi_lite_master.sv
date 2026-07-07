@@ -39,6 +39,7 @@ module axi_lite_master (
     // ---- core side (simple port) ----
     input  logic [31:0] req_addr_i,
     input  logic [31:0] req_wdata_i,
+    input  logic [3:0]  req_wstrb_i,
     input  logic        req_we_i,
     input  logic        req_re_i,
     output logic [31:0] resp_rdata_o,
@@ -112,7 +113,7 @@ module axi_lite_master (
   assign m_awaddr_o  = req_addr_i;
   assign m_awvalid_o = (state_q == WRITE) & ~aw_done_q;
   assign m_wdata_o   = req_wdata_i;
-  assign m_wstrb_o   = 4'b1111;                    // word writes only (Phase 1)
+  assign m_wstrb_o   = req_wstrb_i;                // byte lanes from the LSU
   assign m_wvalid_o  = (state_q == WRITE) & ~w_done_q;
   assign m_bready_o  = (state_q == RESP_B);
 

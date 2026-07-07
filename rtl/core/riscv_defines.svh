@@ -31,6 +31,7 @@
 `define OPC_STORE  7'b0100011  // SW
 `define OPC_OPIMM  7'b0010011  // ALU with immediate (ADDI, ...)
 `define OPC_OP     7'b0110011  // ALU register-register (ADD, ...)
+`define OPC_FENCE  7'b0001111  // memory fence (NOP on this core)
 
 // ---- Immediate format select (imm_gen) ----------------------------------------
 `define IMM_I 3'b000  // I-type: ADDI, LW, JALR

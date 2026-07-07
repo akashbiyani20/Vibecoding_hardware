@@ -24,6 +24,7 @@ module tb_axi_uart;
   logic [31:0] addr, wdata, rdata;
   logic we, re, stall;
   logic tx;
+  logic rx;
 
   logic [31:0] awaddr, wd, araddr, rd;
   logic [3:0]  wstrb;
@@ -37,6 +38,7 @@ module tb_axi_uart;
   axi_lite_master u_bridge (
       .clk_i(clk), .rst_ni(rst_n),
       .req_addr_i(addr), .req_wdata_i(wdata),
+      .req_wstrb_i(4'b1111),
       .req_we_i(we), .req_re_i(re),
       .resp_rdata_o(rdata), .stall_o(stall),
       .m_awaddr_o(awaddr), .m_awvalid_o(awvalid), .m_awready_i(awready),
@@ -49,6 +51,7 @@ module tb_axi_uart;
   axi_lite_uart #(.CLKS_PER_BIT(CPB)) u_uart (
       .clk_i(clk), .rst_ni(rst_n),
       .uart_tx_o(tx),
+      .uart_rx_i(rx),
       .s_awaddr_i(awaddr), .s_awvalid_i(awvalid), .s_awready_o(awready),
       .s_wdata_i(wd), .s_wstrb_i(wstrb), .s_wvalid_i(wvalid), .s_wready_o(wready),
       .s_bresp_o(bresp), .s_bvalid_o(bvalid), .s_bready_i(bready),
@@ -90,6 +93,15 @@ module tb_axi_uart;
     end
   endtask
 
+  // ---- independent 8N1 transmitter: what a terminal's keyboard does -----------
+  task automatic uart_send(input [7:0] b);
+    rx = 0;               #(BIT_NS);        // start bit
+    for (int i = 0; i < 8; i++) begin
+      rx = b[i];          #(BIT_NS);        // data bits, LSB first
+    end
+    rx = 1;               #(BIT_NS);        // stop bit
+  endtask
+
   task automatic check32(input [31:0] got, input [31:0] exp, input string what);
     checks++;
     if (got !== exp) begin
@@ -106,6 +118,7 @@ module tb_axi_uart;
     $dumpfile("tb_axi_uart.vcd");
     $dumpvars(0, tb_axi_uart);
     we = 0; re = 0; addr = 0; wdata = 0;
+    rx = 1;                      // line idles high
     rst_n = 0;
     repeat (3) @(negedge clk);
     rst_n = 1;
@@ -153,6 +166,27 @@ module tb_axi_uart;
       join
       check32({24'd0, rxb}, {24'd0, expected[c]}, "polled stream byte");
     end
+
+    // ---- RX path -----------------------------------------------------------
+    // 6: nothing received yet -> STATUS bit1 clear
+    bus_read(32'h4, tmp);
+    check32(tmp & 32'h2, 32'h0, "no RX data initially");
+    // 7: send a byte into the rx pin, STATUS bit1 sets, RX reg holds it
+    uart_send(8'h5A);
+    #(BIT_NS);
+    bus_read(32'h4, tmp);
+    check32((tmp >> 1) & 32'h1, 32'h1, "RX valid after frame");
+    bus_read(32'h8, tmp);
+    check32(tmp, 32'h0000_005A, "RX byte value");
+    // 8: reading popped it
+    bus_read(32'h4, tmp);
+    check32((tmp >> 1) & 32'h1, 32'h0, "RX valid cleared by read");
+    // 9: two bytes back-to-back: second overwrites first (no FIFO)
+    uart_send(8'h11);
+    uart_send(8'h22);
+    #(BIT_NS);
+    bus_read(32'h8, tmp);
+    check32(tmp, 32'h0000_0022, "overwrite: newest byte wins");
 
     if (errors == 0) $display("RESULT: PASS (%0d checks)", checks);
     else             $display("RESULT: FAIL (%0d/%0d checks failed)", errors, checks);

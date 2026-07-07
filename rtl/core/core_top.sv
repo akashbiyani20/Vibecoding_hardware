@@ -59,15 +59,16 @@ module core_top (
     output logic [31:0] imem_addr_o,
     input  logic [31:0] imem_rdata_i,
 
-    // data memory interface (becomes AXI4-Lite master in Stage C)
+    // data memory interface (wrapped by the AXI4-Lite master bridge)
     output logic [31:0] dmem_addr_o,
     output logic [31:0] dmem_wdata_o,
+    output logic [3:0]  dmem_wstrb_o,   // byte lanes (LSU-generated)
     output logic        dmem_we_o,
     output logic        dmem_re_o,
     input  logic [31:0] dmem_rdata_i,
 
     // status (debug / future trap handling)
-    output logic        illegal_o
+    output logic        illegal_o      // unsupported instr OR misaligned access
 );
 
   // ---- signals ---------------------------------------------------------------
@@ -80,6 +81,8 @@ module core_top (
   logic        branch_taken;
 
   // control signals
+  logic [31:0] load_data;
+  logic        misaligned, ctrl_illegal;
   logic [2:0]  imm_sel;
   logic [3:0]  alu_op;
   logic [1:0]  op_a_sel, wb_sel;
@@ -112,7 +115,7 @@ module core_top (
       .branch_o   (branch),
       .jump_o     (jump),
       .jump_reg_o (jump_reg),
-      .illegal_o  (illegal_o)
+      .illegal_o  (ctrl_illegal)
   );
 
   imm_gen u_imm_gen (
@@ -154,17 +157,29 @@ module core_top (
       .zero_o  (alu_zero)
   );
 
-  // ---- data memory ----------------------------------------------------------------------
-  assign dmem_addr_o  = alu_result;   // LW/SW address = rs1 + imm
-  assign dmem_wdata_o = rs2_data;     // SW stores rs2
-  assign dmem_we_o    = mem_write;
-  assign dmem_re_o    = mem_read;
+  // ---- data memory (through the load-store unit) ------------------------------------------
+  // The LSU handles byte/halfword placement (stores) and extraction with
+  // sign/zero extension (loads). funct3 = instr[14:12] tells it the size.
+  lsu u_lsu (
+      .addr_i      (alu_result),
+      .funct3_i    (instr[14:12]),
+      .store_data_i(rs2_data),
+      .wdata_o     (dmem_wdata_o),
+      .wstrb_o     (dmem_wstrb_o),
+      .rdata_i     (dmem_rdata_i),
+      .load_data_o (load_data),
+      .misaligned_o(misaligned)
+  );
+
+  assign dmem_addr_o = alu_result;    // load/store address = rs1 + imm
+  assign dmem_we_o   = mem_write;
+  assign dmem_re_o   = mem_read;
 
   // ---- write-back --------------------------------------------------------------------------
   always_comb begin
     unique case (wb_sel)
       `WB_ALU: wb_data = alu_result;
-      `WB_MEM: wb_data = dmem_rdata_i;
+      `WB_MEM: wb_data = load_data;    // LSU-extracted (LB/LH/LW/LBU/LHU)
       `WB_PC4: wb_data = pc_plus4;     // JAL/JALR link address
       default: wb_data = alu_result;
     endcase
@@ -173,7 +188,19 @@ module core_top (
   // ---- next-PC logic ------------------------------------------------------------------------
   assign pc_plus4     = pc_q + 32'd4;
   assign pc_target    = pc_q + imm;                          // branches, JAL
-  assign branch_taken = branch & (alu_zero ^ instr[12]);     // instr[12] = funct3[0]
+
+  // Branch condition, all six branches with one mux and one XOR:
+  //   BEQ/BNE  (funct3=00x): ALU did SUB   -> condition = zero flag
+  //   BLT/BGE  (funct3=10x): ALU did SLT   -> condition = result bit 0
+  //   BLTU/BGEU(funct3=11x): ALU did SLTU  -> condition = result bit 0
+  //   funct3[0]=1 (BNE/BGE/BGEU) inverts the sense.
+  logic branch_cond;
+  assign branch_cond  = instr[14] ? alu_result[0] : alu_zero;
+  assign branch_taken = branch & (branch_cond ^ instr[12]);
+
+  // misaligned memory access is reported like an illegal instruction:
+  // loud failure in simulation, trap material on real hardware
+  assign illegal_o = ctrl_illegal | ((mem_read | mem_write) & misaligned);
 
   assign pc_next = jump_reg                ? {alu_result[31:1], 1'b0}  // JALR
                  : (jump | branch_taken)   ? pc_target                 // JAL, taken branch

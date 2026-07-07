@@ -9,7 +9,8 @@ room for more registers later.
 | 0x0000_0000  | 4 KB   | Instruction memory | Read-only from CPU fetch       |
 | 0x1000_0000  | 4 KB   | GPIO               | AXI4-Lite slave (Stage C)      |
 | 0x1000_1000  | 4 KB   | UART               | AXI4-Lite slave (Stage C)      |
-| 0x2000_0000  | 4 KB   | Data RAM           | Added in Stage B (LW/SW)       |
+| 0x1000_2000  | 4 KB   | Timer              | AXI4-Lite slave (Stage E)      |
+| 0x2000_0000  | 4 KB   | Data RAM           | AXI4-Lite slave                |
 
 ## Address decoding rule
 
@@ -18,8 +19,24 @@ bits `[15:12]` inside the peripheral region. Simple, fast, and extensible.
 
 ## Peripheral register maps
 
-Defined when each peripheral is implemented (Stage C). Reserved so far:
+### GPIO (0x1000_0000)
 
-- `GPIO_BASE + 0x0` — GPIO_OUT (R/W): bit 0 drives LED 0
-- `UART_BASE + 0x0` — UART_TX (W): write a byte to transmit
-- `UART_BASE + 0x4` — UART_STATUS (R): bit 0 = TX busy
+| Offset | Name | Access | Function |
+|--------|------|--------|----------|
+| 0x00 | GPIO_OUT | R/W | bit N drives LED N |
+
+### UART (0x1000_1000)
+
+| Offset | Name | Access | Function |
+|--------|------|--------|----------|
+| 0x00 | TX | W | byte to transmit (ignored while TX busy) |
+| 0x04 | STATUS | R | bit0 = TX busy, bit1 = RX data available |
+| 0x08 | RX | R | received byte; reading pops it (clears bit1) |
+
+### Timer (0x1000_2000)
+
+| Offset | Name | Access | Function |
+|--------|------|--------|----------|
+| 0x00 | MTIME_LO | R | free-running 64-bit cycle counter, low word |
+| 0x04 | MTIME_HI | R | high word |
+| 0x08 | (any write) | W | resets the counter to zero |

@@ -32,8 +32,10 @@ R_OPS = {"add": (0x00, 0), "sub": (0x20, 0), "sll": (0x00, 1), "slt": (0x00, 2),
          "sltu": (0x00, 3), "xor": (0x00, 4), "srl": (0x00, 5), "sra": (0x20, 5),
          "or": (0x00, 6), "and": (0x00, 7)}
 I_OPS = {"addi": 0, "slti": 2, "sltiu": 3, "xori": 4, "ori": 6, "andi": 7}
+LOAD_OPS = {"lb": 0, "lh": 1, "lw": 2, "lbu": 4, "lhu": 5}
+STORE_OPS = {"sb": 0, "sh": 1, "sw": 2}
 SHIFT_OPS = {"slli": (0x00, 1), "srli": (0x00, 5), "srai": (0x20, 5)}
-BRANCH_OPS = {"beq": 0, "bne": 1}
+BRANCH_OPS = {"beq": 0, "bne": 1, "blt": 4, "bge": 5, "bltu": 6, "bgeu": 7}
 
 
 def reg(name):
@@ -148,13 +150,23 @@ def assemble(text):
             if not 0 <= shamt <= 31:
                 sys.exit(f"error: shift amount {shamt} out of range")
             word = enc_i((f7 << 5) | shamt, reg(args[1]), f3, reg(args[0]), 0x13)
-        elif op == "lw":
+        elif op in LOAD_OPS:
             m = MEM_RE.match(" ".join(args[1:]))
-            word = enc_i(imm_value(m.group(1)), reg(m.group(2)), 2,
+            word = enc_i(imm_value(m.group(1)), reg(m.group(2)), LOAD_OPS[op],
                          reg(args[0]), 0x03)
-        elif op == "sw":
+        elif op in STORE_OPS:
             m = MEM_RE.match(" ".join(args[1:]))
-            word = enc_s(imm_value(m.group(1)), reg(args[0]), reg(m.group(2)), 2)
+            word = enc_s(imm_value(m.group(1)), reg(args[0]), reg(m.group(2)),
+                         STORE_OPS[op])
+        elif op == "fence":
+            word = 0x0FF0000F                                  # fence iorw,iorw
+        elif op == "j":                                        # pseudo: jal x0
+            off = imm_value(args[0], labels, pc)
+            word = enc_j(off, 0)
+        elif op == "ret":                                      # pseudo: jalr x0,0(ra)
+            word = enc_i(0, 1, 0, 0, 0x67)
+        elif op == "mv":                                       # pseudo: addi rd,rs,0
+            word = enc_i(0, reg(args[1]), 0, reg(args[0]), 0x13)
         elif op in BRANCH_OPS:
             off = imm_value(args[2], labels, pc)
             word = enc_b(off, reg(args[1]), reg(args[0]), BRANCH_OPS[op])

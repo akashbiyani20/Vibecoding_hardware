@@ -28,6 +28,7 @@ module tb_core;
   logic        clk, rst_n;
   logic [31:0] imem_addr, imem_rdata;
   logic [31:0] dmem_addr, dmem_wdata, dmem_rdata;
+  logic [3:0]  dmem_wstrb;
   logic        dmem_we, dmem_re, illegal;
 
   int errors = 0;
@@ -44,6 +45,7 @@ module tb_core;
       .imem_rdata_i(imem_rdata),
       .dmem_addr_o (dmem_addr),
       .dmem_wdata_o(dmem_wdata),
+      .dmem_wstrb_o(dmem_wstrb),
       .dmem_we_o   (dmem_we),
       .dmem_re_o   (dmem_re),
       .dmem_rdata_i(dmem_rdata),
@@ -65,8 +67,12 @@ module tb_core;
                       ? dram[dmem_addr[11:2]] : 32'd0;
 
   always_ff @(posedge clk) begin
-    if (dmem_we && dmem_addr[31:28] == 4'h2)
-      dram[dmem_addr[11:2]] <= dmem_wdata;
+    if (dmem_we && dmem_addr[31:28] == 4'h2) begin
+      if (dmem_wstrb[0]) dram[dmem_addr[11:2]][7:0]   <= dmem_wdata[7:0];
+      if (dmem_wstrb[1]) dram[dmem_addr[11:2]][15:8]  <= dmem_wdata[15:8];
+      if (dmem_wstrb[2]) dram[dmem_addr[11:2]][23:16] <= dmem_wdata[23:16];
+      if (dmem_wstrb[3]) dram[dmem_addr[11:2]][31:24] <= dmem_wdata[31:24];
+    end
   end
 
   // ---- clock and illegal-instruction watchdog --------------------------------------
@@ -163,6 +169,22 @@ module tb_core;
 	run_prog("prog6_mul", 60);
 	check_reg(3, 70, "prog6: 10*7");
 	//check_reg(3, 71, ...)
+
+    // -- program 7: byte/halfword loads and stores (Stage E) ------------------------------
+    run_prog("prog7_bytes", 40);
+    check_reg(3,  32'hFFFF_FFEF, "prog7: lb sign-extends");
+    check_reg(4,  32'h0000_00EF, "prog7: lbu zero-extends");
+    check_reg(5,  32'hFFFF_FFDE, "prog7: lb from offset 3");
+    check_reg(6,  32'hFFFF_BEEF, "prog7: lh sign-extends");
+    check_reg(7,  32'h0000_DEAD, "prog7: lhu from offset 2");
+    check_reg(9,  32'h0000_4241, "prog7: two sb then lhu");
+    check_reg(11, 32'h0000_5678, "prog7: sh writes only its half");
+    check_dram(1, 32'h0000_4241, "prog7: mem word 1 byte lanes");
+    check_dram(2, 32'h0000_5678, "prog7: mem word 2 half lane");
+
+    // -- program 8: signed vs unsigned branches (Stage E) ----------------------------------
+    run_prog("prog8_branches", 40);
+    check_reg(10, 6, "prog8: all six branch decisions correct");
 
     // ---- summary --------------------------------------------------------------------------------
     if (errors == 0) $display("RESULT: PASS (%0d checks)", checks);

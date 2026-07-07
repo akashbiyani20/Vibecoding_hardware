@@ -23,6 +23,7 @@ module tb_soc;
   logic clk, rst_n;
   logic [7:0] led;
   logic uart_tx, illegal;
+  logic uart_rx;
 
   int errors = 0;
   int checks = 0;
@@ -35,6 +36,7 @@ module tb_soc;
       .rst_ni   (rst_n),
       .led_o    (led),
       .uart_tx_o(uart_tx),
+      .uart_rx_i(uart_rx),
       .illegal_o(illegal)
   );
 
@@ -92,6 +94,7 @@ module tb_soc;
     $dumpfile("tb_soc.vcd");
     $dumpvars(0, tb_soc);
     if ($value$plusargs("hexdir=%s", hexdir)) ;
+    uart_rx = 1;               // serial line idles high
     rst_n = 0;
 
     // ================= Test 1: LED blink =================

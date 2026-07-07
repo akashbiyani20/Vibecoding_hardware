@@ -1,4 +1,4 @@
-# UART TX Peripheral (`rtl/periph/axi_lite_uart.sv`)
+# UART Peripheral (`rtl/periph/axi_lite_uart.sv`)
 
 ## Purpose
 
@@ -22,10 +22,27 @@ ends, the line is already back at idle level with zero extra logic.
 
 ## Register map (base 0x1000_1000)
 
-| Offset | Name   | Access | Function                                 |
-|--------|--------|--------|-------------------------------------------|
-| 0x00   | TX     | W      | byte to transmit (ignored while busy)     |
-| 0x04   | STATUS | R      | bit 0 = busy                              |
+| Offset | Name   | Access | Function                                    |
+|--------|--------|--------|----------------------------------------------|
+| 0x00   | TX     | W      | byte to transmit (ignored while TX busy)     |
+| 0x04   | STATUS | R      | bit 0 = TX busy, bit 1 = RX byte waiting     |
+| 0x08   | RX     | R      | received byte — reading POPS it (clears bit1)|
+
+## The receive path (Stage E)
+
+RX reverses the TX story: wait for the start-bit edge, then sample each bit
+at its MIDDLE (start + 1.5, 2.5 ... bit times). Mid-bit sampling gives
+maximum tolerance to clock mismatch between the two ends. Three details
+worth understanding:
+
+- **2-flop synchronizer** on the rx pin: the signal comes from another
+  clock domain (the sender's), so sampling it directly risks metastability.
+  Two flip-flops in a row is the standard cure.
+- **Start-bit validation**: after the falling edge, re-check the line at
+  mid-start-bit; if it's back high it was a glitch, not a frame.
+- **Read-to-pop**: reading the RX register clears the data-available flag —
+  hardware handshake, no extra "ack" register. A new byte overwrites an
+  unread one (no FIFO yet; natural future extension).
 
 ## The software contract
 

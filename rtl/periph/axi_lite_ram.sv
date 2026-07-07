@@ -22,7 +22,9 @@
 // ============================================================================
 
 module axi_lite_ram #(
-    parameter int DEPTH_WORDS = 1024   // 4 KB
+    parameter int DEPTH_WORDS = 1024,  // 4 KB
+    parameter     INIT_FILE   = ""     // preload image (C .rodata/.data);
+                                       // on FPGA this becomes BRAM init
 ) (
     input  logic        clk_i,
     input  logic        rst_ni,
@@ -49,6 +51,10 @@ module axi_lite_ram #(
   localparam int AW = $clog2(DEPTH_WORDS);
 
   logic [31:0] mem[0:DEPTH_WORDS-1];
+
+  initial begin
+    if (INIT_FILE != "") $readmemh(INIT_FILE, mem);
+  end
 
   // ---- write path ---------------------------------------------------------------
   logic wr_fire;

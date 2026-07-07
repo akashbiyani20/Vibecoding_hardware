@@ -37,7 +37,8 @@
 // ============================================================================
 
 module soc_top #(
-    parameter              PROGRAM_HEX  = "",
+    parameter              PROGRAM_HEX  = "",   // code -> imem
+    parameter              DATA_HEX     = "",   // .rodata/.data -> RAM
     parameter int          CLKS_PER_BIT = 868,
     parameter int          GPIO_WIDTH   = 8
 ) (
@@ -45,6 +46,7 @@ module soc_top #(
     input  logic                  rst_ni,
     output logic [GPIO_WIDTH-1:0] led_o,
     output logic                  uart_tx_o,
+    input  logic                  uart_rx_i,
     output logic                  illegal_o   // debug: unsupported instruction
 );
 
@@ -53,6 +55,7 @@ module soc_top #(
 
   // ---- core <-> bridge ---------------------------------------------------------
   logic [31:0] dmem_addr, dmem_wdata, dmem_rdata;
+  logic [3:0]  dmem_wstrb;
   logic        dmem_we, dmem_re, stall;
 
   // ---- bridge <-> xbar (master side) ---------------------------------------------
@@ -82,6 +85,12 @@ module soc_top #(
   logic s2_awvalid, s2_awready, s2_wvalid, s2_wready, s2_bvalid, s2_bready;
   logic s2_arvalid, s2_arready, s2_rvalid, s2_rready;
 
+  logic [31:0] s3_awaddr, s3_wdata, s3_araddr, s3_rdata;
+  logic [3:0]  s3_wstrb;
+  logic [1:0]  s3_bresp, s3_rresp;
+  logic s3_awvalid, s3_awready, s3_wvalid, s3_wready, s3_bvalid, s3_bready;
+  logic s3_arvalid, s3_arready, s3_rvalid, s3_rready;
+
   // ==========================================================================
   // Instances
   // ==========================================================================
@@ -101,6 +110,7 @@ module soc_top #(
       .imem_rdata_i(imem_rdata),
       .dmem_addr_o (dmem_addr),
       .dmem_wdata_o(dmem_wdata),
+      .dmem_wstrb_o(dmem_wstrb),
       .dmem_we_o   (dmem_we),
       .dmem_re_o   (dmem_re),
       .dmem_rdata_i(dmem_rdata),
@@ -109,7 +119,7 @@ module soc_top #(
 
   axi_lite_master u_bridge (
       .clk_i(clk_i), .rst_ni(rst_ni),
-      .req_addr_i(dmem_addr), .req_wdata_i(dmem_wdata),
+      .req_addr_i(dmem_addr), .req_wdata_i(dmem_wdata), .req_wstrb_i(dmem_wstrb),
       .req_we_i(dmem_we), .req_re_i(dmem_re),
       .resp_rdata_o(dmem_rdata), .stall_o(stall),
       .m_awaddr_o(m_awaddr), .m_awvalid_o(m_awvalid), .m_awready_i(m_awready),
@@ -140,10 +150,15 @@ module soc_top #(
       .s2_wdata_o(s2_wdata), .s2_wstrb_o(s2_wstrb), .s2_wvalid_o(s2_wvalid), .s2_wready_i(s2_wready),
       .s2_bresp_i(s2_bresp), .s2_bvalid_i(s2_bvalid), .s2_bready_o(s2_bready),
       .s2_araddr_o(s2_araddr), .s2_arvalid_o(s2_arvalid), .s2_arready_i(s2_arready),
-      .s2_rdata_i(s2_rdata), .s2_rresp_i(s2_rresp), .s2_rvalid_i(s2_rvalid), .s2_rready_o(s2_rready)
+      .s2_rdata_i(s2_rdata), .s2_rresp_i(s2_rresp), .s2_rvalid_i(s2_rvalid), .s2_rready_o(s2_rready),
+      .s3_awaddr_o(s3_awaddr), .s3_awvalid_o(s3_awvalid), .s3_awready_i(s3_awready),
+      .s3_wdata_o(s3_wdata), .s3_wstrb_o(s3_wstrb), .s3_wvalid_o(s3_wvalid), .s3_wready_i(s3_wready),
+      .s3_bresp_i(s3_bresp), .s3_bvalid_i(s3_bvalid), .s3_bready_o(s3_bready),
+      .s3_araddr_o(s3_araddr), .s3_arvalid_o(s3_arvalid), .s3_arready_i(s3_arready),
+      .s3_rdata_i(s3_rdata), .s3_rresp_i(s3_rresp), .s3_rvalid_i(s3_rvalid), .s3_rready_o(s3_rready)
   );
 
-  axi_lite_ram #(.DEPTH_WORDS(1024)) u_ram (
+  axi_lite_ram #(.DEPTH_WORDS(1024), .INIT_FILE(DATA_HEX)) u_ram (
       .clk_i(clk_i), .rst_ni(rst_ni),
       .s_awaddr_i(s0_awaddr), .s_awvalid_i(s0_awvalid), .s_awready_o(s0_awready),
       .s_wdata_i(s0_wdata), .s_wstrb_i(s0_wstrb), .s_wvalid_i(s0_wvalid), .s_wready_o(s0_wready),
@@ -165,11 +180,21 @@ module soc_top #(
   axi_lite_uart #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_uart (
       .clk_i(clk_i), .rst_ni(rst_ni),
       .uart_tx_o(uart_tx_o),
+      .uart_rx_i(uart_rx_i),
       .s_awaddr_i(s2_awaddr), .s_awvalid_i(s2_awvalid), .s_awready_o(s2_awready),
       .s_wdata_i(s2_wdata), .s_wstrb_i(s2_wstrb), .s_wvalid_i(s2_wvalid), .s_wready_o(s2_wready),
       .s_bresp_o(s2_bresp), .s_bvalid_o(s2_bvalid), .s_bready_i(s2_bready),
       .s_araddr_i(s2_araddr), .s_arvalid_i(s2_arvalid), .s_arready_o(s2_arready),
       .s_rdata_o(s2_rdata), .s_rresp_o(s2_rresp), .s_rvalid_o(s2_rvalid), .s_rready_i(s2_rready)
+  );
+
+  axi_lite_timer u_timer (
+      .clk_i(clk_i), .rst_ni(rst_ni),
+      .s_awaddr_i(s3_awaddr), .s_awvalid_i(s3_awvalid), .s_awready_o(s3_awready),
+      .s_wdata_i(s3_wdata), .s_wstrb_i(s3_wstrb), .s_wvalid_i(s3_wvalid), .s_wready_o(s3_wready),
+      .s_bresp_o(s3_bresp), .s_bvalid_o(s3_bvalid), .s_bready_i(s3_bready),
+      .s_araddr_i(s3_araddr), .s_arvalid_i(s3_arvalid), .s_arready_o(s3_arready),
+      .s_rdata_o(s3_rdata), .s_rresp_o(s3_rresp), .s_rvalid_o(s3_rvalid), .s_rready_i(s3_rready)
   );
 
 endmodule

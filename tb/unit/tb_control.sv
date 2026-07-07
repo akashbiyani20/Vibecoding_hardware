@@ -137,12 +137,29 @@ module tb_control;
     // garbage opcode: all signals must stay in the safe default state
     expect_ctrl(32'hFFFF_FFFF, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 1, "garbage word");
     expect_ctrl(32'h0000_0000, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 1, "all-zero word");
-    // lb x5, 0(x2) — byte load, not in Phase 1
-    expect_ctrl({12'd0, 5'd2, 3'b000, 5'd5, `OPC_LOAD},  `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 1, "LB unsupported");
-    // sb x5, 0(x2)
-    expect_ctrl({7'd0, 5'd5, 5'd2, 3'b000, 5'd0, `OPC_STORE}, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 1, "SB unsupported");
-    // blt x1, x2, +8
-    expect_ctrl({7'd0, 5'd2, 5'd1, 3'b100, 5'b01000, `OPC_BRANCH}, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 1, "BLT unsupported");
+    // lw with funct3=011 — no such load
+    expect_ctrl({12'd0, 5'd2, 3'b011, 5'd5, `OPC_LOAD},  `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 1, "load f3=011 illegal");
+    // store with funct3=011 — no such store
+    expect_ctrl({7'd0, 5'd5, 5'd2, 3'b011, 5'd0, `OPC_STORE}, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 1, "store f3=011 illegal");
+    // branch with funct3=010 — gap in the encoding space
+    expect_ctrl({7'd0, 5'd2, 5'd1, 3'b010, 5'b01000, `OPC_BRANCH}, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 1, "branch f3=010 illegal");
+
+    // ---------------- Stage E: full load/store/branch sets ----------------------
+    // lb x5, 0(x2) / lbu / lh / lhu — all legal now, same controls as LW
+    expect_ctrl({12'd0, 5'd2, 3'b000, 5'd5, `OPC_LOAD}, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_IMM, 1, `WB_MEM, 1, 0, 0, 0, 0, 0, "LB");
+    expect_ctrl({12'd0, 5'd2, 3'b100, 5'd5, `OPC_LOAD}, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_IMM, 1, `WB_MEM, 1, 0, 0, 0, 0, 0, "LBU");
+    expect_ctrl({12'd0, 5'd2, 3'b001, 5'd5, `OPC_LOAD}, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_IMM, 1, `WB_MEM, 1, 0, 0, 0, 0, 0, "LH");
+    expect_ctrl({12'd0, 5'd2, 3'b101, 5'd5, `OPC_LOAD}, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_IMM, 1, `WB_MEM, 1, 0, 0, 0, 0, 0, "LHU");
+    // sb / sh
+    expect_ctrl({7'd0, 5'd5, 5'd2, 3'b000, 5'd0, `OPC_STORE}, `IMM_S, `ALU_ADD, `OPA_RS1, `OPB_IMM, 0, `WB_ALU, 0, 1, 0, 0, 0, 0, "SB");
+    expect_ctrl({7'd0, 5'd5, 5'd2, 3'b001, 5'd0, `OPC_STORE}, `IMM_S, `ALU_ADD, `OPA_RS1, `OPB_IMM, 0, `WB_ALU, 0, 1, 0, 0, 0, 0, "SH");
+    // blt/bge use SLT; bltu/bgeu use SLTU
+    expect_ctrl({7'd0, 5'd2, 5'd1, 3'b100, 5'b01000, `OPC_BRANCH}, `IMM_B, `ALU_SLT,  `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 1, 0, 0, 0, "BLT");
+    expect_ctrl({7'd0, 5'd2, 5'd1, 3'b101, 5'b01000, `OPC_BRANCH}, `IMM_B, `ALU_SLT,  `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 1, 0, 0, 0, "BGE");
+    expect_ctrl({7'd0, 5'd2, 5'd1, 3'b110, 5'b01000, `OPC_BRANCH}, `IMM_B, `ALU_SLTU, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 1, 0, 0, 0, "BLTU");
+    expect_ctrl({7'd0, 5'd2, 5'd1, 3'b111, 5'b01000, `OPC_BRANCH}, `IMM_B, `ALU_SLTU, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 1, 0, 0, 0, "BGEU");
+    // fence = NOP: no state-changing signal
+    expect_ctrl(32'h0FF0000F, `IMM_I, `ALU_ADD, `OPA_RS1, `OPB_RS2, 0, `WB_ALU, 0, 0, 0, 0, 0, 0, "FENCE as NOP");
 
     // safety check: an illegal instruction must never write state
     checks++;

@@ -15,9 +15,10 @@
 // Supported instructions (Phase 1):
 //   R-type : ADD SUB SLL SLT SLTU XOR SRL SRA OR AND
 //   I-type : ADDI SLTI SLTIU XORI ORI ANDI SLLI SRLI SRAI
-//   Loads  : LW            Stores: SW
-//   Branch : BEQ BNE
+//   Loads  : LB LH LW LBU LHU      Stores: SB SH SW
+//   Branch : BEQ BNE BLT BGE BLTU BGEU
 //   Jumps  : JAL JALR      Upper : LUI AUIPC
+//   FENCE  : executes as NOP (single core, no caches — nothing to order)
 //
 //   JALR, LUI, AUIPC are beyond the README minimum but nearly free in decode
 //   and practically required: JALR is how every function returns (`ret`),
@@ -25,10 +26,9 @@
 //   AUIPC enables position-independent addressing. The I-type ALU ops beyond
 //   ADDI cost zero extra logic (same decode path).
 //
-// How branches resolve (in the core, later):
-//   BEQ/BNE make the ALU compute rs1 - rs2. The branch is taken when
-//     taken = branch_o & (alu_zero ^ funct3[0])
-//   funct3[0]=0 for BEQ (take if zero), 1 for BNE (take if not zero).
+// How branches resolve (in the core):
+//   cond  = funct3[2] ? alu_result[0] : alu_zero   (SLT/SLTU vs SUB-zero)
+//   taken = branch_o & (cond ^ funct3[0])          (funct3[0] inverts)
 //
 // How jump targets form (in the core, later):
 //   JAL  : target = PC + J-immediate      (dedicated adder, like branches)
@@ -36,8 +36,8 @@
 //   Both write PC+4 to rd (wb_sel = WB_PC4).
 //
 // illegal_o:
-//   Set for anything not listed above (including LB/LH/SB/SH for now —
-//   Phase 1 is word-only). The core can trap or halt on it; in simulation
+//   Set for anything not listed above (ECALL/EBREAK/CSR stay illegal until
+//   trap support exists). The core can trap or halt on it; in simulation
 //   it catches firmware/toolchain mistakes early.
 //
 // Timing: purely combinational.
@@ -111,40 +111,53 @@ module control (
           alu_op_o = {1'b0, funct3};
       end
 
-      // ---- LW: address = rs1 + imm, writeback from memory --------------------
+      // ---- loads: address = rs1 + imm, writeback from memory (via LSU) --------
       `OPC_LOAD: begin
-        if (funct3 == 3'b010) begin       // LW only (Phase 1 is word-only)
+        // legal funct3: LB=000 LH=001 LW=010 LBU=100 LHU=101
+        if (funct3 == 3'b000 || funct3 == 3'b001 || funct3 == 3'b010 ||
+            funct3 == 3'b100 || funct3 == 3'b101) begin
           reg_write_o = 1'b1;
           op_b_sel_o  = `OPB_IMM;
           imm_sel_o   = `IMM_I;
           mem_read_o  = 1'b1;
           wb_sel_o    = `WB_MEM;
         end else begin
-          illegal_o = 1'b1;               // LB/LH/LBU/LHU: future extension
+          illegal_o = 1'b1;
         end
       end
 
-      // ---- SW: address = rs1 + imm, no writeback ------------------------------
+      // ---- stores: address = rs1 + imm, no writeback (LSU sets byte lanes) ----
       `OPC_STORE: begin
-        if (funct3 == 3'b010) begin       // SW only
-          op_b_sel_o  = `OPB_IMM;
+        if (funct3 == 3'b000 || funct3 == 3'b001 || funct3 == 3'b010) begin
+          op_b_sel_o  = `OPB_IMM;         // SB=000 SH=001 SW=010
           imm_sel_o   = `IMM_S;
           mem_write_o = 1'b1;
         end else begin
-          illegal_o = 1'b1;               // SB/SH: future extension
+          illegal_o = 1'b1;
         end
       end
 
-      // ---- BEQ/BNE: ALU does rs1-rs2, core checks zero flag -------------------
+      // ---- branches: the ALU computes the comparison, the core decides --------
+      // BEQ/BNE (00x): SUB, look at the zero flag
+      // BLT/BGE (10x): SLT, look at result bit 0 (1 = less-than)
+      // BLTU/BGEU(11x): SLTU, same but unsigned
+      // funct3[0] inverts the sense (BNE/BGE/BGEU take when condition FALSE)
       `OPC_BRANCH: begin
-        if (funct3 == 3'b000 || funct3 == 3'b001) begin
+        if (funct3 != 3'b010 && funct3 != 3'b011) begin
           branch_o  = 1'b1;
-          alu_op_o  = `ALU_SUB;
-          imm_sel_o = `IMM_B;             // branch offset (used by target adder)
+          imm_sel_o = `IMM_B;
+          unique case (funct3[2:1])
+            2'b00:   alu_op_o = `ALU_SUB;
+            2'b10:   alu_op_o = `ALU_SLT;
+            default: alu_op_o = `ALU_SLTU;
+          endcase
         end else begin
-          illegal_o = 1'b1;               // BLT/BGE/BLTU/BGEU: future extension
+          illegal_o = 1'b1;               // funct3 010/011 don't exist
         end
       end
+
+      // ---- FENCE: memory ordering hint — a NOP on a single in-order core ------
+      `OPC_FENCE: ;                       // safe defaults already = NOP
 
       // ---- JAL: rd = PC+4, target = PC + J-imm --------------------------------
       `OPC_JAL: begin

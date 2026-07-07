@@ -1,23 +1,19 @@
 // ============================================================================
-// tb_axi_gpio.sv — GPIO slave unit test (driven through the real bridge)
+// tb_axi_timer.sv — timer unit test (driven through the real bridge)
 // ----------------------------------------------------------------------------
-// Reuses the verified axi_lite_master as the bus driver, so the GPIO sees
-// bona fide AXI traffic. Tests:
-//   1. Reset state: all pins low
-//   2. Write -> pins change
-//   3. Read-back matches pins
-//   4. Every bit pattern 0..255
-//   5. Write to unmapped offset ignored, read of unmapped offset returns 0
+// Tests:
+//   1. Counter runs: two reads spaced N cycles apart differ by ~N
+//   2. Write resets the counter
+//   3. hi-shadow coherence: reading LO latches HI (the rollover race fix)
 // ============================================================================
 
 `timescale 1ns / 1ps
 
-module tb_axi_gpio;
+module tb_axi_timer;
 
   logic clk, rst_n;
   logic [31:0] addr, wdata, rdata;
   logic we, re, stall;
-  logic [7:0] pins;
 
   logic [31:0] awaddr, wd, araddr, rd;
   logic [3:0]  wstrb;
@@ -41,9 +37,8 @@ module tb_axi_gpio;
       .m_rdata_i(rd), .m_rresp_i(rresp), .m_rvalid_i(rvalid), .m_rready_o(rready)
   );
 
-  axi_lite_gpio #(.WIDTH(8)) u_gpio (
+  axi_lite_timer u_timer (
       .clk_i(clk), .rst_ni(rst_n),
-      .gpio_o(pins),
       .s_awaddr_i(awaddr), .s_awvalid_i(awvalid), .s_awready_o(awready),
       .s_wdata_i(wd), .s_wstrb_i(wstrb), .s_wvalid_i(wvalid), .s_wready_o(wready),
       .s_bresp_o(bresp), .s_bvalid_o(bvalid), .s_bready_i(bready),
@@ -66,48 +61,49 @@ module tb_axi_gpio;
     d = rdata; re = 0;
   endtask
 
-  task automatic check32(input [31:0] got, input [31:0] exp, input string what);
-    checks++;
-    if (got !== exp) begin
-      errors++;
-      $display("FAIL: %s | expected 0x%08h got 0x%08h", what, exp, got);
-    end
-  endtask
-
-  logic [31:0] tmp;
+  logic [31:0] t1, t2, hi;
 
   initial begin
-    $dumpfile("tb_axi_gpio.vcd");
-    $dumpvars(0, tb_axi_gpio);
+    $dumpfile("tb_axi_timer.vcd");
+    $dumpvars(0, tb_axi_timer);
     we = 0; re = 0; addr = 0; wdata = 0;
     rst_n = 0;
     repeat (3) @(negedge clk);
     rst_n = 1;
     @(negedge clk);
 
-    // 1: reset state
-    check32({24'd0, pins}, 32'd0, "pins low after reset");
-
-    // 2: write turns pins on
-    bus_write(32'h0, 32'h0000_00A5);
-    check32({24'd0, pins}, 32'h0000_00A5, "pins follow write");
-
-    // 3: read-back
-    bus_read(32'h0, tmp);
-    check32(tmp, 32'h0000_00A5, "read-back of GPIO_OUT");
-
-    // 4: all patterns
-    for (int v = 0; v < 256; v++) begin
-      bus_write(32'h0, v);
-      check32({24'd0, pins}, v[31:0], "pattern sweep");
+    // 1: counter advances by the elapsed cycles
+    bus_read(32'h0, t1);
+    repeat (50) @(negedge clk);
+    bus_read(32'h0, t2);
+    checks++;
+    if (t2 - t1 < 50 || t2 - t1 > 60) begin
+      errors++;
+      $display("FAIL: expected ~50-60 cycle delta, got %0d", t2 - t1);
     end
 
-    // 5: unmapped offset — write ignored, read returns 0
-    bus_write(32'h0, 32'h0000_0055);
-    bus_write(32'h8, 32'hFFFF_FFFF);
-    check32({24'd0, pins}, 32'h0000_0055, "write to 0x8 ignored");
-    bus_read(32'h8, tmp);
-    check32(tmp, 32'd0, "read of 0x8 returns 0");
+    // 2: write resets
+    bus_write(32'h0, 32'h0);
+    bus_read(32'h0, t1);
+    checks++;
+    if (t1 > 10) begin
+      errors++; $display("FAIL: counter not reset (read %0d)", t1);
+    end
+
+    // 3: hi shadow — force the counter near 32-bit rollover, read lo then hi
+    u_timer.mtime_q = 64'h0000_0000_FFFF_FFF0;
+    bus_read(32'h0, t1);      // latches hi=0 with lo
+    repeat (40) @(negedge clk);  // counter rolls over during the gap
+    bus_read(32'h4, hi);      // must return the LATCHED hi (0), not current (1)
+    checks++;
+    if (hi !== 32'd0) begin
+      errors++;
+      $display("FAIL: hi shadow broken — got %0d, expected latched 0", hi);
+    end
+    checks++;
+    if (t1 < 32'hFFFF_FF00) begin
+      errors++; $display("FAIL: lo read implausible: 0x%08h", t1);
+    end
 
     if (errors == 0) $display("RESULT: PASS (%0d checks)", checks);
     else             $display("RESULT: FAIL (%0d/%0d checks failed)", errors, checks);

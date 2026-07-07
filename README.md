@@ -10,6 +10,24 @@ The philosophy is simple:
 
 ---
 
+# Project Status (updated as we build)
+
+| Stage | Content | State |
+|-------|---------|-------|
+| A | CPU leaf modules (PC, regfile, ALU, imm gen, control) | done, unit-verified |
+| B | Single-cycle RV32I core running real programs | done |
+| C | AXI4-Lite bus, GPIO, UART TX, data RAM, soc_top | done — firmware blinks LED & prints over UART in simulation |
+| D | FPGA readiness | lint-clean (Verilator), Basys 3 port files ready in `fpga/`; waiting for a board |
+| E | Full RV32I + timer + UART RX + C toolchain | done — **compiled C runs on the SoC**: prints over UART, software multiply, timer-based LED blink, serial echo |
+
+Quick start:
+- Run everything: ModelSim `do sim/modelsim/run_soc_c.do` (C demo) or `run_soc.do` (asm demos)
+- Write firmware in C: `sw/c/main.c`, build with `sh sw/c/build.sh` (see docs/c_toolchain.md)
+- Or assembly: `sw/*.s` with `python3 sw/asm.py`
+- Docs for every module: `docs/modules/`
+
+---
+
 # Project Vision
 
 The final long-term goal is to build a complete embedded SoC that includes:

@@ -39,7 +39,31 @@ integration. Nothing is integrated before its unit tests pass.
 17. System testbench `tb/system/tb_soc.sv` — done: firmware blinks the LED
     (steady period verified) and prints "Hi!\n" over UART (decoded off the
     pin by an independent serial receiver). Black-box, pins only.
-18. FPGA port — pending (requires an FPGA board; RTL is vendor-neutral)
+18. FPGA port — board files ready (`fpga/basys3/`), design lint-clean
+    (Verilator -Wall, docs/fpga_readiness.md); waiting for hardware
+
+## Stage E — Full RV32I + timer + UART RX + C toolchain (COMPLETE)
+
+Goal achieved: C code compiles and runs on the SoC — see
+tb/system/tb_soc_c.sv and docs/c_toolchain.md. All items below done.
+
+19. Load/store unit (`rtl/core/lsu.sv`): byte/halfword loads and stores
+    (LB/LH/LBU/LHU/SB/SH) via wstrb byte lanes + load sign extension.
+    C compilers emit these constantly (chars, shorts, strings, structs).
+20. Remaining branches BLT/BGE/BLTU/BGEU: control drives the ALU to
+    SLT/SLTU for these; take-decision generalized to one XOR.
+21. Timer peripheral (0x1000_2000): free-running 64-bit cycle counter —
+    accurate delays without calibrated loops.
+22. UART receive path: RX register + data-available status bit; firmware
+    can now read keyboard input from a terminal.
+23. asm.py support for the new instructions (for tests; C replaces it as
+    the main workflow).
+24. C toolchain (`sw/c/`): riscv gcc (-march=rv32i), linker script matching
+    the memory map, crt0 (stack setup + call main), elf-to-hex converter,
+    one-command build script.
+25. C demo firmware verified on the SoC in simulation.
+26. FENCE/ECALL/EBREAK handling: FENCE as NOP (single core needs no
+    ordering), ECALL/EBREAK stay illegal until traps exist.
 
 ## Key decisions made so far
 

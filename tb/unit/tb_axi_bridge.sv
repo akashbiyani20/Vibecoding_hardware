@@ -33,6 +33,7 @@ module tb_axi_bridge;
   axi_lite_master u_bridge (
       .clk_i(clk), .rst_ni(rst_n),
       .req_addr_i(addr), .req_wdata_i(wdata),
+      .req_wstrb_i(4'b1111),
       .req_we_i(we), .req_re_i(re),
       .resp_rdata_o(rdata), .stall_o(stall),
       .m_awaddr_o(awaddr), .m_awvalid_o(awvalid), .m_awready_i(awready),

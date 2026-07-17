@@ -1,0 +1,3 @@
+# Quartus Prime Project File
+QUARTUS_VERSION = "20.1"
+PROJECT_REVISION = "cyclone5"

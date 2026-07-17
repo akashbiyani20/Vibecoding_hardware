@@ -1,0 +1,77 @@
+# ============================================================================
+# cyclone5.qsf — Quartus settings: device, file list, (optional) pins
+# ----------------------------------------------------------------------------
+# Device: generic Cyclone V (the DE0-CV part). Synthesis and timing analysis
+# work fine without a board. If you get a different board later, change the
+# DEVICE line and uncomment its pin block below.
+# ============================================================================
+
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CEBA4F23C7
+set_global_assignment -name TOP_LEVEL_ENTITY fpga_top
+
+# ---- source files (relative to this directory) ------------------------------
+set_global_assignment -name SEARCH_PATH ../../rtl/core
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/riscv_defines.svh
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/pc.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/regfile.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/alu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/imm_gen.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/control.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/lsu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/imem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/core/core_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/bus/axi_lite_master.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/bus/axi_lite_xbar.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/periph/axi_lite_ram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/periph/axi_lite_gpio.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/periph/axi_lite_uart.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/periph/axi_lite_timer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/soc/soc_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE fpga_top.sv
+set_global_assignment -name SDC_FILE cyclone5.sdc
+
+# ---- sensible defaults --------------------------------------------------------
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+
+# ============================================================================
+# Pin assignments — UNCOMMENT the block for your board when it arrives.
+# Until then Quartus picks arbitrary pins, which is fine for analysis.
+# ============================================================================
+
+# ---------------- Terasic DE0-CV (5CEBA4F23C7) --------------------------------
+# set_location_assignment PIN_M9  -to clk50_i
+# set_location_assignment PIN_U7  -to key0_n_i
+# set_location_assignment PIN_AA2 -to led_o[0]
+# set_location_assignment PIN_AA1 -to led_o[1]
+# set_location_assignment PIN_W2  -to led_o[2]
+# set_location_assignment PIN_Y3  -to led_o[3]
+# set_location_assignment PIN_N2  -to led_o[4]
+# set_location_assignment PIN_N1  -to led_o[5]
+# set_location_assignment PIN_U2  -to led_o[6]
+# set_location_assignment PIN_U1  -to led_o[7]
+# # UART on GPIO-0 header pins 1/2 (connect a 3.3V USB-serial adapter)
+# set_location_assignment PIN_N16 -to uart_tx_o
+# set_location_assignment PIN_B16 -to uart_rx_i
+
+# ---------------- Terasic DE1-SoC (5CSEMA5F31C6) -------------------------------
+# (also change: set_global_assignment -name DEVICE 5CSEMA5F31C6)
+# set_location_assignment PIN_AF14 -to clk50_i
+# set_location_assignment PIN_AA14 -to key0_n_i
+# set_location_assignment PIN_V16  -to led_o[0]
+# set_location_assignment PIN_W16  -to led_o[1]
+# set_location_assignment PIN_V17  -to led_o[2]
+# set_location_assignment PIN_V18  -to led_o[3]
+# set_location_assignment PIN_W17  -to led_o[4]
+# set_location_assignment PIN_W19  -to led_o[5]
+# set_location_assignment PIN_Y19  -to led_o[6]
+# set_location_assignment PIN_W20  -to led_o[7]
+# # UART on GPIO-0 header (connect a 3.3V USB-serial adapter)
+# set_location_assignment PIN_AC18 -to uart_tx_o
+# set_location_assignment PIN_Y17  -to uart_rx_i
+
+# IMPORTANT (both boards): verify pins against your board's user manual
+# before powering — pin tables here are from public documentation and
+# must be double-checked on real hardware.

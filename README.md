@@ -60,7 +60,7 @@ Same tests run under Icarus Verilog via `sim/icarus/run.sh <name>`. All 12 testb
 
 ## FPGA
 
-Synthesizes on Cyclone V with Quartus Prime (`fpga/cyclone5/`, project included): ~2,000 registers, 65,536 block-memory bits, place and route in about 7 minutes, SoC clocked at 25 MHz. Basys 3 files exist too (`fpga/basys3/`); the RTL itself is vendor-neutral.
+Synthesizes on Cyclone V with Quartus Prime (`fpga/cyclone5/`, project included): ~2,000 registers, 65,536 block-memory bits, place and route in about 7 minutes, SoC clocked at 25 MHz. Timing closes with margin: the Timing Analyzer reports Fmax 27.46 MHz for the SoC clock — my baseline number for the future pipelining work. Basys 3 files exist too (`fpga/basys3/`); the RTL itself is vendor-neutral.
 
 Getting there was a lesson. My first compile ran the fitter for 17 hours because both memories had silently synthesized into 32,768 flip-flops instead of block RAM — the array sat in an async-reset process, and my byte-enable style didn't match Quartus's inference template. The full post-mortem is in [fpga/cyclone5/README.md](fpga/cyclone5/README.md); the short version is that block RAM inference is template matching, and the Flow Summary's "block memory bits" line is where you catch it.
 

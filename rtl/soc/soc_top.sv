@@ -98,6 +98,7 @@ module soc_top #(
       .DEPTH_WORDS(1024),
       .INIT_FILE  (PROGRAM_HEX)
   ) u_imem (
+      .clk_i  (clk_i),
       .addr_i (imem_addr),
       .rdata_o(imem_rdata)
   );

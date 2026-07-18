@@ -16,9 +16,17 @@
 //   Both paths respect the AXI rule that a slave must not drop valid
 //   until the handshake completes.
 //
-// wstrb (write strobes): one bit per byte lane. The core only does word
-//   writes today (all four bits set), but honoring strobes now means
-//   byte stores (SB/SH) will work later without touching this file.
+// wstrb (write strobes): one bit per byte lane, so SB/SH write only their
+//   lanes while the rest of the word is preserved.
+//
+// FPGA lesson learned the hard way (17-hour place & route):
+//   The memory array and its read register live in a process WITHOUT a
+//   reset. Physical block RAM (Cyclone V M10K, Xilinx BRAM) has no
+//   asynchronous reset — if the array is touched inside an async-reset
+//   process, synthesis silently falls back to FLIP-FLOPS: 32,768 registers
+//   plus a mux the router chokes on. The AXI handshake flags keep their
+//   async reset in separate processes; the RAM itself follows the clean
+//   inference template below.
 // ============================================================================
 
 module axi_lite_ram #(
@@ -63,20 +71,22 @@ module axi_lite_ram #(
   assign s_wready_o  = wr_fire;
   assign s_bresp_o   = 2'b00;                       // OKAY
 
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      s_bvalid_o <= 1'b0;
-    end else begin
-      if (wr_fire) begin
-        if (s_wstrb_i[0]) mem[s_awaddr_i[AW+1:2]][7:0]   <= s_wdata_i[7:0];
-        if (s_wstrb_i[1]) mem[s_awaddr_i[AW+1:2]][15:8]  <= s_wdata_i[15:8];
-        if (s_wstrb_i[2]) mem[s_awaddr_i[AW+1:2]][23:16] <= s_wdata_i[23:16];
-        if (s_wstrb_i[3]) mem[s_awaddr_i[AW+1:2]][31:24] <= s_wdata_i[31:24];
-        s_bvalid_o <= 1'b1;
-      end else if (s_bready_i) begin
-        s_bvalid_o <= 1'b0;
-      end
+  // ---- the RAM itself: no reset, sync write + sync read = M10K/BRAM ----------
+  always_ff @(posedge clk_i) begin
+    if (wr_fire) begin
+      if (s_wstrb_i[0]) mem[s_awaddr_i[AW+1:2]][7:0]   <= s_wdata_i[7:0];
+      if (s_wstrb_i[1]) mem[s_awaddr_i[AW+1:2]][15:8]  <= s_wdata_i[15:8];
+      if (s_wstrb_i[2]) mem[s_awaddr_i[AW+1:2]][23:16] <= s_wdata_i[23:16];
+      if (s_wstrb_i[3]) mem[s_awaddr_i[AW+1:2]][31:24] <= s_wdata_i[31:24];
     end
+    if (rd_fire) s_rdata_o <= mem[s_araddr_i[AW+1:2]];
+  end
+
+  // ---- write response handshake (async reset is fine for plain flops) --------
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni)          s_bvalid_o <= 1'b0;
+    else if (wr_fire)     s_bvalid_o <= 1'b1;
+    else if (s_bready_i)  s_bvalid_o <= 1'b0;
   end
 
   // ---- read path -------------------------------------------------------------------
@@ -86,17 +96,9 @@ module axi_lite_ram #(
   assign s_rresp_o   = 2'b00;                       // OKAY
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      s_rvalid_o <= 1'b0;
-      s_rdata_o  <= 32'd0;
-    end else begin
-      if (rd_fire) begin
-        s_rdata_o  <= mem[s_araddr_i[AW+1:2]];
-        s_rvalid_o <= 1'b1;
-      end else if (s_rready_i) begin
-        s_rvalid_o <= 1'b0;
-      end
-    end
+    if (!rst_ni)          s_rvalid_o <= 1'b0;
+    else if (rd_fire)     s_rvalid_o <= 1'b1;
+    else if (s_rready_i)  s_rvalid_o <= 1'b0;
   end
 
 endmodule

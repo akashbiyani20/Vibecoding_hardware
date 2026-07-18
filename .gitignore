@@ -7,3 +7,15 @@ work/
 *.mti
 transcript
 vsim.wlf
+
+# Quartus build artifacts
+fpga/cyclone5/db/
+fpga/cyclone5/incremental_db/
+fpga/cyclone5/output_files/
+fpga/cyclone5/*.qws
+fpga/cyclone5/*.rpt
+fpga/cyclone5/*.summary
+fpga/cyclone5/*.jdi
+fpga/cyclone5/*.pin
+fpga/cyclone5/*.sld
+fpga/cyclone5/*.qdf

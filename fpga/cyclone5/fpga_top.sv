@@ -39,14 +39,21 @@ module fpga_top (
     end
   end
 
+  // ---- SoC clock: 50 MHz / 2 = 25 MHz -----------------------------------------
+  // The negedge instruction fetch packs fetch + execute into one period,
+  // so the SoC runs at a relaxed 25 MHz for a comfortable timing margin.
+  // (declared as a generated clock in cyclone5.sdc)
+  logic clk_div_q = 1'b0;
+  always_ff @(posedge clk50_i) clk_div_q <= ~clk_div_q;
+
   // ---- the chip --------------------------------------------------------------
   soc_top #(
       .PROGRAM_HEX ("prog_c_text.hex"),  // firmware code  (put hex in project dir)
       .DATA_HEX    ("prog_c_data.hex"),  // firmware data
-      .CLKS_PER_BIT(434),                // 50 MHz / 115200 baud
+      .CLKS_PER_BIT(217),                // 25 MHz / 115200 baud
       .GPIO_WIDTH  (8)
   ) u_soc (
-      .clk_i    (clk50_i),
+      .clk_i    (clk_div_q),
       .rst_ni   (rst_n_sync),
       .led_o    (led_o),
       .uart_tx_o(uart_tx_o),

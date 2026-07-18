@@ -56,6 +56,7 @@ module tb_core;
   imem #(
       .DEPTH_WORDS(1024)
   ) u_imem (
+      .clk_i  (clk),
       .addr_i (imem_addr),
       .rdata_o(imem_rdata)
   );

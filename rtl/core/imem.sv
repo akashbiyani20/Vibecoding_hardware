@@ -40,9 +40,11 @@ module imem #(
 
   logic [31:0] mem[0:DEPTH_WORDS-1];
 
-  initial begin
-    if (INIT_FILE != "") $readmemh(INIT_FILE, mem);
-  end
+  generate
+    if (INIT_FILE != "") begin : g_init      // elaboration-time check
+      initial $readmemh(INIT_FILE, mem);
+    end
+  endgenerate
 
   // read in the first half-cycle (falling edge) — see header
   always_ff @(negedge clk_i) begin

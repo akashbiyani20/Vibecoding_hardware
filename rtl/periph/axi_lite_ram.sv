@@ -19,14 +19,19 @@
 // wstrb (write strobes): one bit per byte lane, so SB/SH write only their
 //   lanes while the rest of the word is preserved.
 //
-// FPGA lesson learned the hard way (17-hour place & route):
-//   The memory array and its read register live in a process WITHOUT a
-//   reset. Physical block RAM (Cyclone V M10K, Xilinx BRAM) has no
-//   asynchronous reset — if the array is touched inside an async-reset
-//   process, synthesis silently falls back to FLIP-FLOPS: 32,768 registers
-//   plus a mux the router chokes on. The AXI handshake flags keep their
-//   async reset in separate processes; the RAM itself follows the clean
-//   inference template below.
+// FPGA lessons learned the hard way (17-hour, then 1-hour place & route):
+//   Block RAM inference is TEMPLATE MATCHING — the tool either recognizes
+//   the exact pattern or silently builds 32,768 flip-flops. Three rules
+//   encoded below:
+//   1. No reset anywhere near the memory array (block RAM has no async
+//      reset) — the array lives in its own reset-free process.
+//   2. Byte enables use the PACKED-LANE array type
+//      (logic [3:0][7:0] mem[...]) with whole-lane assignments — Intel's
+//      documented template. Bit-range writes (mem[a][7:0] <= ...) pass
+//      Vivado but DEFEAT Quartus inference.
+//   3. $readmemh initialization must be unconditional inside its block —
+//      a runtime `if` around it makes Quartus drop the init (warning
+//      10855). The parameter check is a `generate` (elaboration-time).
 // ============================================================================
 
 module axi_lite_ram #(
@@ -58,11 +63,15 @@ module axi_lite_ram #(
 
   localparam int AW = $clog2(DEPTH_WORDS);
 
-  logic [31:0] mem[0:DEPTH_WORDS-1];
+  // packed byte lanes: mem[i][3] = bits 31:24 ... mem[i][0] = bits 7:0
+  // $readmemh still reads one 32-bit word per line — layout is identical.
+  logic [3:0][7:0] mem[0:DEPTH_WORDS-1];
 
-  initial begin
-    if (INIT_FILE != "") $readmemh(INIT_FILE, mem);
-  end
+  generate
+    if (INIT_FILE != "") begin : g_init      // elaboration-time, not runtime
+      initial $readmemh(INIT_FILE, mem);
+    end
+  endgenerate
 
   // ---- write path ---------------------------------------------------------------
   logic wr_fire;
@@ -71,13 +80,13 @@ module axi_lite_ram #(
   assign s_wready_o  = wr_fire;
   assign s_bresp_o   = 2'b00;                       // OKAY
 
-  // ---- the RAM itself: no reset, sync write + sync read = M10K/BRAM ----------
+  // ---- the RAM itself: no reset, whole-lane writes, sync read = M10K/BRAM ----
   always_ff @(posedge clk_i) begin
     if (wr_fire) begin
-      if (s_wstrb_i[0]) mem[s_awaddr_i[AW+1:2]][7:0]   <= s_wdata_i[7:0];
-      if (s_wstrb_i[1]) mem[s_awaddr_i[AW+1:2]][15:8]  <= s_wdata_i[15:8];
-      if (s_wstrb_i[2]) mem[s_awaddr_i[AW+1:2]][23:16] <= s_wdata_i[23:16];
-      if (s_wstrb_i[3]) mem[s_awaddr_i[AW+1:2]][31:24] <= s_wdata_i[31:24];
+      if (s_wstrb_i[0]) mem[s_awaddr_i[AW+1:2]][0] <= s_wdata_i[7:0];
+      if (s_wstrb_i[1]) mem[s_awaddr_i[AW+1:2]][1] <= s_wdata_i[15:8];
+      if (s_wstrb_i[2]) mem[s_awaddr_i[AW+1:2]][2] <= s_wdata_i[23:16];
+      if (s_wstrb_i[3]) mem[s_awaddr_i[AW+1:2]][3] <= s_wdata_i[31:24];
     end
     if (rd_fire) s_rdata_o <= mem[s_araddr_i[AW+1:2]];
   end

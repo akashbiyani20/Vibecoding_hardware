@@ -96,10 +96,10 @@ module axi_lite_uart #(
       end else if (busy) begin
         if (baud_cnt_q == 0) begin
           shift_q     <= {1'b1, shift_q[9:1]};   // next bit, fill with idle
-          bits_left_q <= bits_left_q - 1;
+          bits_left_q <= bits_left_q - 1'b1;
           baud_cnt_q  <= BAUD_RELOAD;
         end else begin
-          baud_cnt_q <= baud_cnt_q - 1;
+          baud_cnt_q <= baud_cnt_q - 1'b1;
         end
       end
     end
